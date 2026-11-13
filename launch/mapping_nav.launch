@@ -89,8 +89,9 @@
     <rosparam file="/home/l1ang_ws/src/l1ang/nav_lidar/global_costmap_params.yaml" command="load" />
     <rosparam file="/home/l1ang_ws/src/l1ang/nav_lidar/local_costmap_params.yaml" command="load" />
     <param name="base_global_planner" value="global_planner/GlobalPlanner" />
-    <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
-    <rosparam file="$(find ydlidar_ros_driver)/config/dwa_local_planner_params.yaml" command="load" />
+    <!-- 用自己的折线跟踪规划器替代 dwa_local_planner/DWAPlannerROS -->
+    <param name="base_local_planner" value="ydlidar_ros_driver/L1angLocalPlanner"/>
+    <rosparam file="$(find ydlidar_ros_driver)/config/l1ang_local_planner_params.yaml" command="load" />
     <!-- 全局规划 -->
     <param name="planner_frequency" value="10.0"/>
     <param name="planner_patience"  value="5.0"/>

@@ -1,0 +1,11 @@
+<library path="lib/libl1ang_local_planner">
+  <class
+      name="ydlidar_ros_driver/L1angLocalPlanner"
+      type="l1ang_planner::L1angLocalPlanner"
+      base_class_type="nav_core::BaseLocalPlanner">
+    <description>
+      折线（Douglas-Peucker 抽稀）跟踪型局部规划器：朝向对齐后直行，适合转向不灵敏的差速底盘。
+      对应原 scripts/l1ang_planner.py 的算法。
+    </description>
+  </class>
+</library>

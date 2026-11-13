@@ -18,6 +18,14 @@ find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	rospy
 	sensor_msgs
+	nav_core
+	pluginlib
+	costmap_2d
+	tf2
+	tf2_ros
+	tf2_geometry_msgs
+	nav_msgs
+	geometry_msgs
 	)
 
 ##################LaserFan ##########################
@@ -39,8 +47,11 @@ find_package(catkin REQUIRED COMPONENTS
 ## LIBRARIES: libraries you create in this project that dependent projects als    o need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(CATKIN_DEPENDS
+catkin_package(INCLUDE_DIRS include
+	CATKIN_DEPENDS
 	roscpp rospy sensor_msgs message_runtime
+	nav_core pluginlib costmap_2d
+	tf2 tf2_ros tf2_geometry_msgs nav_msgs geometry_msgs
 	)
 #---------------------------------------------------------------------------------------
 # Set default build to release
@@ -57,7 +68,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 #Include directories
-include_directories(${catkin_INCLUDE_DIRS} ${YDLIDAR_SDK_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${YDLIDAR_SDK_INCLUDE_DIRS})
 
 #link library directories
 link_directories(${YDLIDAR_SDK_LIBRARY_DIRS})
@@ -84,12 +95,34 @@ target_link_libraries(${PROJECT_NAME}_node
 
 
 #---------------------------------------------------------------------------------------
+# move_base 局部规划插件 (L1angLocalPlanner，替代 dwa_local_planner)
+#---------------------------------------------------------------------------------------
+add_library(l1ang_local_planner
+	src/l1ang_local_planner.cpp
+	)
+
+add_dependencies(l1ang_local_planner ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(l1ang_local_planner
+	${catkin_LIBRARIES}
+	)
+
+
+#---------------------------------------------------------------------------------------
 # Install
 #---------------------------------------------------------------------------------------
 
-install(TARGETS ${PROJECT_NAME}_node
+install(TARGETS ${PROJECT_NAME}_node l1ang_local_planner
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+	)
+
+install(FILES plugin.xml
+	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+	)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 	)
 
