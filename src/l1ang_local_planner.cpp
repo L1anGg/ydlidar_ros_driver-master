@@ -32,11 +32,11 @@ L1angLocalPlanner::~L1angLocalPlanner() {}
 void L1angLocalPlanner::initialize(std::string name, tf2_ros::Buffer* tf,
                                    costmap_2d::Costmap2DROS* costmap_ros) {
   if (is_initialized_) {
-    ROS_WARN("L1angLocalPlanner 已经初始化过了，忽略重复调用");
+    ROS_WARN("L1angLocalPlanner: already initialized, ignoring");
     return;
   }
   if (tf == NULL || costmap_ros == NULL) {
-    ROS_ERROR("L1angLocalPlanner: tf 或 costmap 为空，初始化失败");
+    ROS_ERROR("L1angLocalPlanner: tf or costmap is null, initialization failed");
     return;
   }
   tf_ = tf;
@@ -75,7 +75,7 @@ void L1angLocalPlanner::initialize(std::string name, tf2_ros::Buffer* tf,
 
   is_initialized_ = true;
   ROS_INFO(
-      "L1angLocalPlanner 初始化完成: dp_threshold=%.3f max_v=%.2f max_w=%.2f "
+      "L1angLocalPlanner initialized: dp_threshold=%.3f max_v=%.2f max_w=%.2f "
       "yaw_tol=%.2f dist_tol=%.2f stop_dist=%.2f scan=%s",
       prm_.dp_threshold, prm_.max_v, prm_.max_w, prm_.yaw_tol, prm_.dist_tol, stop_dist_,
       scan_topic_.c_str());
@@ -142,7 +142,7 @@ bool L1angLocalPlanner::getRobotPose(Point& robot, double& robot_yaw) {
       tf_->transform(global_pose, transformed, target_frame, ros::Duration(0.1));
       global_pose = transformed;
     } catch (const tf2::TransformException& ex) {
-      ROS_WARN_THROTTLE(1.0, "L1angLocalPlanner: 位姿变换到 %s 失败: %s",
+      ROS_WARN_THROTTLE(1.0, "L1angLocalPlanner: transform robot pose to %s failed: %s",
                         target_frame.c_str(), ex.what());
       return false;
     }
@@ -180,11 +180,11 @@ void L1angLocalPlanner::publishPath(const std::vector<Point>& points) {
 
 bool L1angLocalPlanner::setPlan(const std::vector<geometry_msgs::PoseStamped>& plan) {
   if (!is_initialized_) {
-    ROS_ERROR("L1angLocalPlanner: 未初始化就收到了全局路径");
+    ROS_ERROR("L1angLocalPlanner: setPlan() called before initialize()");
     return false;
   }
   if (plan.empty()) {
-    ROS_WARN("L1angLocalPlanner: 收到空路径");
+    ROS_WARN("L1angLocalPlanner: empty global plan");
     return false;
   }
 
@@ -201,12 +201,18 @@ bool L1angLocalPlanner::setPlan(const std::vector<geometry_msgs::PoseStamped>& p
   }
 
   // 全局路径会被高频重规划（planner_frequency），新路径的起点就是车当前位置。
-  // 让索引重新锚定到离车最近的拐点，避免索引漂移导致来回摆动。
+  // 让索引重新锚定到离车最近的拐点，并跳过已经“到达”的点，
+  // 否则在 10Hz 重规划 + 10Hz 控制时会永远停在索引 0 并发零速度。
   std::size_t new_index = 0;
   Point robot;
   double robot_yaw = 0.0;
   if (getRobotPose(robot, robot_yaw)) {
     new_index = nearestIndex(simplified, robot);
+    while (new_index + 1 < simplified.size() &&
+           std::hypot(simplified[new_index].x - robot.x,
+                      simplified[new_index].y - robot.y) < prm_.dist_tol) {
+      ++new_index;
+    }
   }
 
   const std::string frame =
@@ -227,22 +233,22 @@ bool L1angLocalPlanner::setPlan(const std::vector<geometry_msgs::PoseStamped>& p
   }
 
   publishPath(simplified);
-  ROS_INFO("L1angLocalPlanner: 原始 %zu 点 -> 抽稀 %zu 点, 起点索引 %zu", plan.size(),
-           simplified.size(), new_index);
+  ROS_DEBUG("L1angLocalPlanner: plan %zu -> %zu points, start index %zu", plan.size(),
+            simplified.size(), new_index);
   return true;
 }
 
 bool L1angLocalPlanner::computeVelocityCommands(geometry_msgs::Twist& cmd_vel) {
   cmd_vel = geometry_msgs::Twist();
   if (!is_initialized_) {
-    ROS_ERROR("L1angLocalPlanner: 未初始化");
+    ROS_ERROR("L1angLocalPlanner: computeVelocityCommands() called before initialize()");
     return false;
   }
 
   Point robot;
   double robot_yaw = 0.0;
   if (!getRobotPose(robot, robot_yaw)) {
-    ROS_WARN_THROTTLE(1.0, "L1angLocalPlanner: 暂时拿不到机器人位姿");
+    ROS_WARN_THROTTLE(1.0, "L1angLocalPlanner: robot pose not available yet");
     return false;
   }
 
@@ -261,12 +267,30 @@ bool L1angLocalPlanner::computeVelocityCommands(geometry_msgs::Twist& cmd_vel) {
   }
 
   if (path.empty()) {
-    ROS_WARN_THROTTLE(2.0, "L1angLocalPlanner: 还没有收到全局路径");
+    ROS_WARN_THROTTLE(2.0, "L1angLocalPlanner: no global plan received yet");
     return true;  // 零速度等待
   }
 
+  // 跳过已经到达的拐点：重规划后路径起点往往就是车当前位置，
+  // 必须在一个控制周期内连续推进，不能“推进一次就停车”，否则高频重规划时会卡死。
+  std::size_t progressed = index;
+  while (progressed < path.size() && std::hypot(path[progressed].x - robot.x,
+                                                path[progressed].y - robot.y) < prm_.dist_tol) {
+    ++progressed;
+  }
+  if (progressed != index) {
+    boost::mutex::scoped_lock lock(mutex_);
+    if (path_index_ == index) {
+      path_index_ = progressed;
+      ROS_INFO("L1angLocalPlanner: waypoint passed, now tracking %zu/%zu", progressed,
+               path.size() - 1);
+    } else {
+      progressed = path_index_;  // 已被 setPlan() 更新，用最新值
+    }
+  }
+
   // 折线已走完：原地对准目标朝向，便于 isGoalReached() 判定成功
-  if (index >= path.size()) {
+  if (progressed >= path.size()) {
     if (has_goal && has_goal_yaw) {
       const double yaw_err = normalizeAngle(goal_yaw - robot_yaw);
       if (std::fabs(yaw_err) > yaw_goal_tol_) {
@@ -276,21 +300,11 @@ bool L1angLocalPlanner::computeVelocityCommands(geometry_msgs::Twist& cmd_vel) {
     return true;
   }
 
-  const Point target = path[index];
-  const double dist = std::hypot(target.x - robot.x, target.y - robot.y);
-
-  if (dist < prm_.dist_tol) {
-    boost::mutex::scoped_lock lock(mutex_);
-    if (path_index_ == index && path_index_ < path_.size()) {
-      ++path_index_;
-      ROS_INFO("L1angLocalPlanner: 到达拐点 %zu/%zu", path_index_ - 1, path_.size() - 1);
-    }
-    return true;  // 本周期停车，下个周期朝下一个拐点走
-  }
+  const Point target = path[progressed];
 
   const double obstacle = obstacleDistance();
   if (obstacle < stop_dist_) {
-    ROS_WARN_THROTTLE(1.0, "L1angLocalPlanner: 急停，前方障碍 %.3f m", obstacle);
+    ROS_WARN_THROTTLE(1.0, "L1angLocalPlanner: emergency stop, obstacle %.3f m ahead", obstacle);
     return true;
   }
 
