@@ -1,0 +1,46 @@
+<launch>
+
+  <!-- node pkg="tf" type="static_transform_publisher" name="laser_tf_pub"
+        args="0.0 0 0.15 0 0 0 base_link laser_link 100" / -->
+
+
+<node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" output="screen">
+  <!-- 1. 关闭轮式里程计依赖（最关键，不改会直接失效） -->
+  <param name="use_odom" value="false" />
+  <!-- 发布激光里程计odom话题+TF，可用于后续导航或融合 -->
+  <param name="pub_odom" value="true" />
+  <param name="pub_map_odom_transform" value="true" />
+
+  <!-- 2. 坐标系设置 -->
+  <param name="map_frame" value="map" />
+  <param name="odom_frame" value="odom" />
+  <param name="base_frame" value="base_link" />
+  <param name="scan_topic" value="/scan" />
+
+  <!-- 3. 扫描匹配鲁棒性优化 -->
+  <!-- 多分辨率匹配层数：默认3，加到4~5层，从粗到精匹配，大幅降低跟丢概率 -->
+  <param name="map_multi_res_levels" value="4" />
+  <!-- 高斯牛顿最大迭代次数：默认10，调大提升匹配精度，树莓派5建议20~30 -->
+  <param name="max_iterations" value="30" />
+  <!-- 收敛阈值：默认0.005，调小让匹配更精确 -->
+  <param name="delta_trans" value="0.001" />
+  <param name="delta_rot" value="0.001" />
+
+  <!-- 4. 激光有效范围裁剪（低纹理环境效果显著） -->
+  <!-- 只保留近处有效特征，过滤远处空旷点/噪声，长走廊建议设10~15m -->
+  <param name="laser_max_dist" value="15.0" />
+  <!-- 过滤雷达自身遮挡、近距反光点 -->
+  <param name="laser_min_dist" value="0.1" />
+
+  <!-- 5. 地图更新阈值（减少误差累积） -->
+  <!-- 机器人至少移动/旋转多少才更新地图，默认0.1m/0.05rad，适当调大减少频繁更新 -->
+  <param name="map_update_distance_thresh" value="0.2" />
+  <param name="map_update_angle_thresh" value="0.1" />
+
+  <!-- 6. 队列与性能 -->
+  <!-- 扫描队列大小，避免雷达帧率高时丢帧 -->
+  <param name="scan_subscriber_queue_size" value="10" />
+  <!-- 地图发布周期，默认2s，不用太小，节省CPU -->
+  <param name="map_pub_period" value="2.0" />
+</node>
+</launch>

@@ -1,0 +1,71 @@
+<launch>
+
+  <node pkg="tf" type="static_transform_publisher" name="laser_tf_pub"
+        args="0.0 0 0.15 0 0 0 base_link laser 100" />
+
+  <!-- base_footprint -> base_link -->
+  <!-- node pkg="tf" type="static_transform_publisher"
+        name="base_footprint_to_base_link_tf"
+        args="0 0 0 0 0 0 base_footprint base_link 100" / -->
+
+<!-- node pkg="rf2o_laser_odometry" type="rf2o_laser_odometry_node"
+      name="rf2o_laser_odometry" output="screen" -->
+  <!-- param name="laser_scan_topic" value="/scan"/ -->
+  <!-- param name="odom_topic" value="/odom"/ -->
+  <!-- param name="publish_tf" value="true"/ -->
+  <!-- param name="base_frame_id" value="/base_footprint"/ -->
+  <!-- param name="odom_frame_id" value="/odom"/ -->
+  <!-- param name="freq" value="7.0"/ -->
+  <!-- param name="init_pose_from_topic" value="" / -->
+  <!-- param name="verbose" value="false" / -->
+<!-- /node -->
+
+
+  <!-- map -> odom -->
+  <node pkg="amcl" type="amcl" name="amcl" output="screen">
+    <param name="odom_model_type" value="diff"/>
+    <param name="base_frame" value="base_footprint"/>
+    <param name="odom_frame" value="odom"/>
+    <param name="map_frame" value="map"/>
+    <param name="scan_topic" value="/scan"/>
+    <param name="use_map_topic" value="true"/>
+    <param name="first_map_only" value="true"/>
+    <param name="initial_pose_x" value="0.0"/>
+    <param name="initial_pose_y" value="0.0"/>
+    <param name="initial_pose_a" value="0.0"/>
+    <!-- 关键：容忍激光里程计的一帧滞后 -->
+    <param name="transform_tolerance" value="0.5"/>
+    <param name="laser_max_beams" value="60"/>
+    <param name="min_particles" value="200"/>
+    <param name="max_particles" value="2000"/>
+    <param name="kld_err" value="0.01"/>
+    <param name="kld_z" value="0.99"/>
+    <param name="odom_alpha1" value="0.4"/>
+    <param name="odom_alpha2" value="0.2"/>
+    <param name="odom_alpha3" value="0.2"/>
+    <param name="odom_alpha4" value="0.2"/>
+    <param name="update_min_d" value="0.05"/>
+    <param name="update_min_a" value="0.05"/>
+    <param name="resample_interval" value="1"/>
+    <param name="laser_z_hit" value="0.7"/>
+    <param name="laser_z_rand" value="0.3"/>
+    <param name="laser_sigma_hit" value="0.2"/>
+  </node>
+
+  <!-- move_base -->
+  <node pkg="move_base" type="move_base" name="move_base">
+    <!-- remap from="cmd_vel" to="/dwa_cmd_unused"/ -->
+    <rosparam file="/home/l1ang_ws/src/l1ang/nav_lidar/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="/home/l1ang_ws/src/l1ang/nav_lidar/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="/home/l1ang_ws/src/l1ang/nav_lidar/global_costmap_params.yaml" command="load" />
+    <rosparam file="/home/l1ang_ws/src/l1ang/nav_lidar/local_costmap_params.yaml" command="load" />
+    <param name="base_global_planner" value="global_planner/GlobalPlanner" />
+    <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
+    <rosparam file="$(find ydlidar_ros_driver)/config/dwa_local_planner_params.yaml" command="load" />
+    <param name="planner_frequency" value="1.0"/>
+    <param name="planner_patience" value="5.0"/>
+  </node>
+
+  <!-- map server -->
+  <node pkg="map_server" type="map_server" name="map_server" args="/home/l1ang_ws/gmap.yaml"/>
+</launch>
