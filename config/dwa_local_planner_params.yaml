@@ -5,7 +5,7 @@ DWAPlannerROS:
   acc_lim_y: 0.0            # 全向才用
   acc_lim_th: 3.5           # 最大角加速度 rad/s²
 
-  max_vel_trans: 0.15       # 最大线速度 m/s
+  max_vel_trans: 0.10       # 最大线速度 m/s
   min_vel_trans: -0.10        # 最小线速度 m/s
   max_vel_x: 0.25
   min_vel_x: 0.0            # 不倒退
