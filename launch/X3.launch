@@ -58,14 +58,16 @@
     <param name="pwm_max"         value="3600"/>
     
     <!-- 转向差速增益：麦轮打滑补偿，1.0=关闭，可加大到 2~3 -->
-    <param name="angular_gain"    value="2.0"/>
+    <param name="angular_gain"    value="1.0"/>
 
     <!-- 安全看门狗：cmd_vel 超过该秒数无更新则主动停车 -->
     <param name="cmd_timeout"     value="0.5"/>
   </node>
 
+  <!-- rf2o 延时 3 秒启动，等待 /scan 激光数据就绪 -->
   <node pkg="rf2o_laser_odometry" type="rf2o_laser_odometry_node"
-        name="rf2o_laser_odometry" output="screen">
+        name="rf2o_laser_odometry" output="screen"
+        launch-prefix="bash -c 'sleep 3; exec $0 $@'">
     <param name="laser_scan_topic" value="/scan"/>
     <param name="odom_topic" value="/odom"/>
     <param name="publish_tf" value="true"/>
