@@ -43,19 +43,14 @@
     args="0.0 0.0 0.2 0.0 0.0 0.0 base_link laser 40" />
 
   <!-- ==================== 底盘驱动 ==================== -->
-  <!-- cmd_vel 下发 + 编码器里程计 + 发布 odom->base_footprint -->
-  <node pkg="ydlidar_ros_driver" type="drive.py" name="cmd_vel_to_stm32"
+  <!-- cmd_vel 速度下发（不发布 odom / TF） -->
+  <node pkg="ydlidar_ros_driver" type="drive_no_odom.py" name="cmd_vel_to_stm32"
         output="screen" respawn="true">
     <param name="port"            value="/dev/ttyAMA0"/>
     <param name="baud"            value="115200"/>
 
-    <!-- 板子不支持 $mtype 指令，置 0 关闭（避免每 5 秒回一次 FAIL） -->
-    <param name="mtype"           value="0"/>
-
-    <!-- 里程计标定值 -->
+    <!-- 差速解算轮距 -->
     <param name="wheel_base"      value="0.175"/>
-    <param name="wheel_diameter"  value="0.080"/>
-    <param name="counts_per_rev"  value="906.0"/>
 
     <!-- 速度映射：PWM 满量程 ±3600 -->
     <param name="speed_scale"     value="1000.0"/>
@@ -69,4 +64,16 @@
     <param name="cmd_timeout"     value="0.5"/>
   </node>
 
+  <node pkg="rf2o_laser_odometry" type="rf2o_laser_odometry_node"
+        name="rf2o_laser_odometry" output="screen">
+    <param name="laser_scan_topic" value="/scan"/ >
+    <param name="odom_topic" value="/odom"/ >
+    <param name="publish_tf" value="true"/ >
+    <param name="base_frame_id" value="/base_footprint"/ >
+    <param name="odom_frame_id" value="/odom"/ >
+    <param name="freq" value="7.0"/ >
+    <param name="init_pose_from_topic" value="" />
+    <param name="verbose" value="false" />
+  </node>
+  
 </launch>
