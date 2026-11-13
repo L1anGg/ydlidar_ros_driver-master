@@ -1,7 +1,7 @@
 DWAPlannerROS:
   global_frame_id: odom
   # ===== 机器人运动学参数 =====
-  acc_lim_x: 0.8            # 最大 x 加速度 m/s²
+  acc_lim_x: 0.4            # 最大 x 加速度 m/s²
   acc_lim_y: 0.0            # 全向才用
   acc_lim_th: 2.5           # 最大角加速度 rad/s²
 
