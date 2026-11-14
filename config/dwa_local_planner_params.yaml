@@ -3,7 +3,7 @@ DWAPlannerROS:
   # ===== 机器人运动学参数 =====
   acc_lim_x: 0.4            # 最大 x 加速度 m/s²
   acc_lim_y: 0.0            # 全向才用
-  acc_lim_th: 3.5           # 最大角加速度 rad/s²
+  acc_lim_th: 1.5           # 最大角加速度 rad/s²
 
   max_vel_trans: 0.10       # 最大线速度 m/s
   min_vel_trans: -0.10        # 最小线速度 m/s
@@ -12,7 +12,7 @@ DWAPlannerROS:
   max_vel_y: 0.0            # 全向才用
   min_vel_y: 0.0
 
-  max_vel_theta: 3.5        # 最大角速度 rad/s
+  max_vel_theta: 1.5        # 最大角速度 rad/s
   min_vel_theta: 0.0        # 最小角速度 rad/s
 
   holonomic_robot: false    # 差速底盘必须为 false
