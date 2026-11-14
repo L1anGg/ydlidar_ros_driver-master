@@ -5,10 +5,10 @@ L1angLocalPlanner:
   dp_threshold: 0.15        # Douglas-Peucker 阈值 (m)，原 THRESHOLD
 
   # ===== 控制参数 =====
-  yaw_kp: 0.5               # 转向比例系数
-  dist_kp: 0.5              # 前进比例系数
+  yaw_kp: 1.0               # 转向比例系数
+  dist_kp: 1.0              # 前进比例系数
   max_v: 0.25               # 最大线速度 (m/s)，原 Python 为 0.3，这里与 dwa 配置的 max_vel_x 一致
-  max_w: 1.5                # 最大角速度 (rad/s)
+  max_w: 1.0                # 最大角速度 (rad/s)
   yaw_tol: 0.25             # 朝向容差 (rad)，超过则原地转向
   dist_tol: 0.10            # 到达拐点容差 (m)
 
