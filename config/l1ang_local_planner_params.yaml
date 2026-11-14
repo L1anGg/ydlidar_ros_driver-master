@@ -15,7 +15,7 @@ L1angLocalPlanner:
   # ===== 安全 =====
   stop_dist: 0.15           # 正前方障碍小于该距离则急停 (m)
   scan_topic: scan
-  scan_span_deg: 20.0       # 只检查正前方 ±该角度 (度)
+  scan_span_deg: 30.0       # 只检查正前方 ±该角度 (度)
 
   # ===== 到点判定 =====
   # 注意: xy_goal_tolerance 必须大于 dist_tol，否则永远判定不到点
