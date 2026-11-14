@@ -70,5 +70,5 @@
   </node>
 
   <!-- map server -->
-  <node pkg="map_server" type="map_server" name="map_server" args="/home/l1ang_ws/gmap.yaml"/>
+  <node pkg="map_server" type="map_server" name="map_server" args="/home/l1ang_ws/map_1.yaml"/>
 </launch>
