@@ -34,8 +34,6 @@ class Stm32ChassisBridge(object):
         self.angular_gain  = float(rospy.get_param('~angular_gain', 1.0))
         # 驱动板 PWM 满量程 ±3600
         self.pwm_max       = int(rospy.get_param('~pwm_max', 3600))
-        # 电机启动死区：|速度指令| 小于该值时抬到该值（实测值），<=0 关闭补偿
-        self.cmd_deadband  = float(rospy.get_param('~cmd_deadband', 100.0))
 
         # 安全看门狗：超过该秒数没收到 /cmd_vel 就主动停车（<=0 关闭）
         self.cmd_timeout   = float(rospy.get_param('~cmd_timeout', 0.5))
@@ -58,8 +56,8 @@ class Stm32ChassisBridge(object):
         rospy.Timer(rospy.Duration(0.1), self._watchdog_cb)
         rospy.on_shutdown(self._shutdown_stop)
 
-        rospy.loginfo("底盘桥接节点已启动，等待 /cmd_vel ...（超时 %.1fs 自动停车，死区补偿 %d）",
-                      self.cmd_timeout, int(self.cmd_deadband))
+        rospy.loginfo("底盘桥接节点已启动，等待 /cmd_vel ...（超时 %.1fs 自动停车）",
+                      self.cmd_timeout)
 
     # ======================= 串口收发 =======================
     def send_raw(self, text):
@@ -102,24 +100,10 @@ class Stm32ChassisBridge(object):
         except Exception:
             pass
 
-    def _deadband_comp(self, u):
-        """单轮速度指令死区补偿：|u| 不足死区时抬到死区值，u=0 保持停车。
-
-        左右各自独立补偿，不改变两轮差速关系（直行/弧线曲率不变）。
-        """
-        d = self.cmd_deadband
-        if d <= 0 or u == 0:
-            return u
-        if -d < u < d:
-            return d if u > 0 else -d
-        return u
-
     def send_speed(self, left, right):
-        left  = self._deadband_comp(left)
-        right = self._deadband_comp(right)
-        left  = max(-self.speed_scale, min(self.speed_scale, int(left)))
-        right = max(-self.speed_scale, min(self.speed_scale, int(right)))
-        frame = "$spd:%d,%d,%d,%d#" % (-right, left, -left, right)
+        left  = max(-self.pwm_max, min(self.pwm_max, int(left)))
+        right = max(-self.pwm_max, min(self.pwm_max, int(right)))
+        frame = "$pwm:%d,%d,%d,%d#" % (-right, left, -left, right)
         rospy.logdebug(frame)
         self.send_raw(frame)
 
