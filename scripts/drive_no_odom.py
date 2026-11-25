@@ -35,7 +35,7 @@ class Stm32ChassisBridge(object):
         # 驱动板 PWM 满量程 ±3600
         self.pwm_max       = int(rospy.get_param('~pwm_max', 3600))
         # 电机启动死区：|速度指令| 小于该值时抬到该值（实测值），<=0 关闭补偿
-        self.cmd_deadband  = float(rospy.get_param('~cmd_deadband', 70.0))
+        self.cmd_deadband  = float(rospy.get_param('~cmd_deadband', 100.0))
 
         # 安全看门狗：超过该秒数没收到 /cmd_vel 就主动停车（<=0 关闭）
         self.cmd_timeout   = float(rospy.get_param('~cmd_timeout', 0.5))
