@@ -68,7 +68,7 @@ class Stm32ChassisBridge(object):
 
     # ======================= 串口收发 =======================
     def send_raw(self, text):
-        '串口发送'
+        '''串口发送'''
         if isinstance(text, str):
             data = text.encode('ascii')
         else:
@@ -121,7 +121,7 @@ class Stm32ChassisBridge(object):
         return u
 
     def send_speed(self, left, right):
-        '限幅，死区补偿，发送速度，调用串口发送函数'
+        '''限幅，死区补偿，发送速度，调用串口发送函数'''
         left  = int(max(-self.speed_scale, min(self.speed_scale, left)))
         right = int(max(-self.speed_scale, min(self.speed_scale, right)))
         left  = self._deadband_comp(left)
@@ -135,7 +135,7 @@ class Stm32ChassisBridge(object):
 
     # ======================= 控制下发 =======================
     def cmd_vel_cb(self, msg):
-        '速度解算，调用发送速度函数'
+        '''速度解算，调用发送速度函数'''
         v = msg.linear.x
         w = msg.angular.z
 
