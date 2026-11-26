@@ -52,11 +52,14 @@
     <!-- 差速解算轮距 -->
     <param name="wheel_base"      value="0.175"/>
 
-    <!-- 速度映射：PWM 满量程 ±3600 -->
+    <!-- 速度映射：$spd 满量程 ±1000，spd = 速度(m/s) × speed_scale -->
     <param name="speed_scale"     value="1000.0"/>
     <param name="max_speed"       value="1.0"/>
     <param name="pwm_max"         value="3600"/>
-    
+
+    <!-- 电机启动死区：|spd| 小于该值时抬到该值，0 完全关闭补偿 -->
+    <param name="cmd_deadband"    value="100.0"/>
+
     <!-- 转向差速增益：麦轮打滑补偿，1.0=关闭，可加大到 2~3 -->
     <param name="angular_gain"    value="3.0"/>
 
