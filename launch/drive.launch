@@ -58,7 +58,7 @@
     <param name="pwm_max"         value="3600"/>
 
     <!-- 电机启动死区：|spd| 小于该值时抬到该值，0 完全关闭补偿 -->
-    <param name="cmd_deadband"    value="100.0"/>
+    <param name="cmd_deadband"    value="120.0"/>
 
     <!-- 转向差速增益：麦轮打滑补偿，1.0=关闭，可加大到 2~3 -->
     <param name="angular_gain"    value="1.0"/>

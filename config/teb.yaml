@@ -10,8 +10,8 @@ TebLocalPlannerROS:
  feasibility_check_no_poses: 5
  oscillation_recovery: True
 
- max_vel_x: 0.25
- max_vel_x_backwards: 0.0    #  禁倒车，消除来回抖
+ max_vel_x: 0.5
+ max_vel_x_backwards: 0.25    #  禁倒车，消除来回抖
  max_vel_theta: 0.8
  acc_lim_x: 0.5
  acc_lim_theta: 0.8
@@ -22,10 +22,10 @@ TebLocalPlannerROS:
 
  footprint_model:
    type: "circular"
-   radius: 0.10
+   radius: 0.15
 
  xy_goal_tolerance: 0.2
- yaw_goal_tolerance: 0.4     #  放宽，到点不再原地硬调
+ yaw_goal_tolerance: 0.3     #  放宽，到点不再原地硬调
  free_goal_vel: False
 
  min_obstacle_dist: 0.10
