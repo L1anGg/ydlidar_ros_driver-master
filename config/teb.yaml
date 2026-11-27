@@ -12,9 +12,9 @@ TebLocalPlannerROS:
 
  max_vel_x: 0.35
  max_vel_x_backwards: 0.25    #  禁倒车，消除来回抖
- max_vel_theta: 0.8
+ max_vel_theta: 1
  acc_lim_x: 0.15
- acc_lim_theta: 0.8
+ acc_lim_theta: 1
 
  min_turning_radius: 0.0     # 保留原地转向
  wheelbase: 0.175
